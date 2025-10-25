@@ -44,25 +44,25 @@ const COLORS = {
 
 // Mock data for income
 const incomeData = [
-  { category: "Ventas", amount: 45000 },
-  { category: "Servicios", amount: 32000 },
-  { category: "Consultoría", amount: 28000 },
-  { category: "Comisiones", amount: 15000 },
-  { category: "Otros", amount: 8000 },
+  { category: "Ventas", monto: 45000 },
+  { category: "Servicios", monto: 32000 },
+  { category: "Consultoría", monto: 28000 },
+  { category: "Comisiones", monto: 15000 },
+  { category: "Otros", monto: 8000 },
 ];
 
 // Mock data for expenses
 const expensesData = [
-  { category: "Nómina", amount: 35000 },
-  { category: "Alquiler", amount: 12000 },
-  { category: "Marketing", amount: 18000 },
-  { category: "Suministros", amount: 8500 },
-  { category: "Servicios", amount: 6500 },
+  { category: "Nómina", monto: 35000 },
+  { category: "Alquiler", monto: 12000 },
+  { category: "Marketing", monto: 18000 },
+  { category: "Suministros", monto: 8500 },
+  { category: "Servicios", monto: 6500 },
 ];
 
 // Calculate totals
-const totalIncome = incomeData.reduce((sum, item) => sum + item.amount, 0);
-const totalExpenses = expensesData.reduce((sum, item) => sum + item.amount, 0);
+const totalIncome = incomeData.reduce((sum, item) => sum + item.monto, 0);
+const totalExpenses = expensesData.reduce((sum, item) => sum + item.monto, 0);
 const netBalance = totalIncome - totalExpenses;
 const profitMargin = ((netBalance / totalIncome) * 100).toFixed(1);
 
@@ -286,7 +286,7 @@ export default function Home() {
                     }}
                   />
                   <Bar
-                    dataKey="amount"
+                    dataKey="monto"
                     fill={COLORS.primary}
                     radius={[0, 8, 8, 0]}
                   >
@@ -342,15 +342,15 @@ export default function Home() {
                     }}
                   />
                   <Bar
-                    dataKey="amount"
-                    fill={COLORS.tertiary}
+                    dataKey="monto"
+                    fill={COLORS.primary}
                     radius={[0, 8, 8, 0]}
                   >
                     {expensesData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={
-                          index % 2 === 0 ? COLORS.tertiary : COLORS.secondary
+                          index % 2 === 0 ? COLORS.primary : COLORS.secondary
                         }
                       />
                     ))}
@@ -381,7 +381,7 @@ export default function Home() {
             <Alert
               style={{
                 backgroundColor: COLORS.primary,
-                borderColor: COLORS.secondary,
+                border: "none",
               }}
             >
               <AlertTitle style={{ color: COLORS.white }}>
@@ -409,11 +409,11 @@ export default function Home() {
               </Alert>
             )}
 
-            {expensesData[0].amount > totalIncome * 0.3 && (
+            {expensesData[0].monto > totalIncome * 0.3 && (
               <Alert
                 style={{
                   backgroundColor: COLORS.primary,
-                  borderColor: COLORS.secondary,
+                  border: "none",
                 }}
               >
                 <AlertTriangle
@@ -433,7 +433,7 @@ export default function Home() {
             <Alert
               style={{
                 backgroundColor: COLORS.secondary,
-                borderColor: COLORS.primary,
+                border: "none",
               }}
             >
               <AlertTitle style={{ color: COLORS.white }}>
@@ -442,9 +442,9 @@ export default function Home() {
               <AlertDescription style={{ color: COLORS.white }}>
                 La principal fuente de ingresos es{" "}
                 <strong>{incomeData[0].category}</strong> ($
-                {incomeData[0].amount.toLocaleString()}). El mayor gasto es{" "}
+                {incomeData[0].monto.toLocaleString()}). El mayor gasto es{" "}
                 <strong>{expensesData[0].category}</strong> ($
-                {expensesData[0].amount.toLocaleString()}).
+                {expensesData[0].monto.toLocaleString()}).
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -475,8 +475,6 @@ export default function Home() {
                 className="flex gap-3 p-4 rounded-lg"
                 style={{
                   backgroundColor: COLORS.primary,
-                  borderWidth: "1px",
-                  borderColor: COLORS.secondary,
                 }}
               >
                 <div
@@ -507,8 +505,6 @@ export default function Home() {
                 className="flex gap-3 p-4 rounded-lg"
                 style={{
                   backgroundColor: COLORS.secondary,
-                  borderWidth: "1px",
-                  borderColor: COLORS.primary,
                 }}
               >
                 <div
@@ -539,8 +535,6 @@ export default function Home() {
                 className="flex gap-3 p-4 rounded-lg"
                 style={{
                   backgroundColor: COLORS.primary,
-                  borderWidth: "1px",
-                  borderColor: COLORS.secondary,
                 }}
               >
                 <div
@@ -571,8 +565,6 @@ export default function Home() {
                 className="flex gap-3 p-4 rounded-lg"
                 style={{
                   backgroundColor: COLORS.primary,
-                  borderWidth: "1px",
-                  borderColor: COLORS.secondary,
                 }}
               >
                 <div
