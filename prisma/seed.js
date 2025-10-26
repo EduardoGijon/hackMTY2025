@@ -13,7 +13,7 @@ async function main() {
       businessName: 'Restaurante El Buen Sabor',
       businessType: 'Restaurante'
     }
-  });
+  }); // ola
 
   console.log('👤 Usuario creado:', user.businessName);
 
