@@ -1,40 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
-import {
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  Lightbulb,
-  DollarSign,
-  ChevronDown,
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { DashboardData } from '@/types';
+import { SummaryCards } from '@/components/dashboard/SummaryCards';
+import { ChartsSection } from '@/components/dashboard/ChartsSection';
+import { RecommendationsSection } from '@/components/dashboard/RecommendationsSections';
 
-// Color palette constants - Capital One Theme
 const COLORS = {
-  primary: "#004879", // Deep Blue - Azul oscuro Capital One
-  secondary: "#DA1F2C", // Card Red - Rojo distintivo Capital One
-  tertiary: "#E8F4F8", // Light Blue - Azul claro complementario
-  quaternary: "#F5F5F5", // Light Gray - Gris claro neutro
+  primary: "#004879",
+  secondary: "#DA1F2C",
+  tertiary: "#E8F4F8",
+  quaternary: "#F5F5F5",
   white: "#FFFFFF",
   text: {
     dark: "#004879",
@@ -42,63 +18,71 @@ const COLORS = {
   },
 } as const;
 
-// Mock data for income
-const incomeData = [
-  { category: "Ventas", monto: 45000 },
-  { category: "Servicios", monto: 32000 },
-  { category: "Consultoría", monto: 28000 },
-  { category: "Comisiones", monto: 15000 },
-  { category: "Otros", monto: 8000 },
-];
+export default function Dashboard() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState("10");
+  const [selectedYear, setSelectedYear] = useState("2025");
+  const [availableYears, setAvailableYears] = useState<string[]>([]); // Años disponibles
+  const userId = "user123";
 
-// Mock data for expenses
-const expensesData = [
-  { category: "Nómina", monto: 35000 },
-  { category: "Alquiler", monto: 12000 },
-  { category: "Marketing", monto: 18000 },
-  { category: "Suministros", monto: 8500 },
-  { category: "Servicios", monto: 6500 },
-];
+  const selectedDate = `${selectedYear}-${selectedMonth.padStart(2, '0')}`;
 
-// Calculate totals
-const totalIncome = incomeData.reduce((sum, item) => sum + item.monto, 0);
-const totalExpenses = expensesData.reduce((sum, item) => sum + item.monto, 0);
-const netBalance = totalIncome - totalExpenses;
-const profitMargin = ((netBalance / totalIncome) * 100).toFixed(1);
+  // Obtener años disponibles al cargar la página
+  useEffect(() => {
+    fetchAvailableYears();
+  }, []);
 
-// Generate last 12 months
-const generateMonths = () => {
-  const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
-  ];
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Obtener datos cuando cambia mes o año
+  useEffect(() => {
+    if (availableYears.length > 0) {
+      fetchDashboardData();
+    }
+  }, [selectedMonth, selectedYear, availableYears]);
 
-  return Array.from({ length: 12 }, (_, i) => {
-    const monthIndex = (currentMonth - i + 12) % 12;
-    const year = currentMonth - i < 0 ? currentYear - 1 : currentYear;
-    return {
-      label: `${months[monthIndex]} ${year}`,
-      value: `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
-    };
-  });
-};
+  const fetchAvailableYears = async () => {
+    try {
+      const response = await fetch(`/api/available-years?userId=${userId}`);
+      const data = await response.json();
+      setAvailableYears(data.years);
+      
+      // Si el año seleccionado no está disponible, usar el más reciente
+      if (data.years.length > 0 && !data.years.includes(selectedYear)) {
+        setSelectedYear(data.years[0]); // El primer año (más reciente)
+      }
+    } catch (error) {
+      console.error('Error fetching available years:', error);
+      // Fallback a años por defecto
+      setAvailableYears(['2025']);
+    }
+  };
 
-export default function Home() {
-  const [selectedMonth, setSelectedMonth] = useState("Octubre 2025");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const months = generateMonths();
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/dashboard?userId=${userId}&month=${selectedDate}`);
+      const data = await response.json();
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !dashboardData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center"
+           style={{ backgroundColor: COLORS.quaternary }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          <p className="mt-4 text-lg" style={{ color: COLORS.primary }}>
+            Cargando datos financieros...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -112,488 +96,96 @@ export default function Home() {
         <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1
-                className="text-3xl font-bold mb-2"
-                style={{ color: COLORS.primary }}
-              >
+              <h1 className="text-3xl font-bold" style={{ color: COLORS.primary }}>
                 Dashboard Financiero
               </h1>
-              <p style={{ color: COLORS.primary }}>
-                Análisis de ingresos, gastos y recomendaciones
+              <p style={{ color: COLORS.secondary }}>
+                Análisis integral de tu negocio
               </p>
             </div>
 
-            {/* Month Selector Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:opacity-90 transition-colors shadow-sm"
-                style={{
-                  backgroundColor: COLORS.secondary,
-                  color: COLORS.white,
-                }}
-              >
-                <DollarSign className="w-4 h-4" />
-                <span className="text-sm font-medium">{selectedMonth}</span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isDropdownOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
-                  style={{ borderColor: COLORS.tertiary }}
+            {/* Date Selectors */}
+            <div className="flex items-center space-x-3">
+              {/* Month Selector */}
+              <div className="flex flex-col">
+                <label className="text-xs mb-1" style={{ color: COLORS.primary }}>
+                  Mes
+                </label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="px-3 py-2 border rounded-lg text-sm"
+                  style={{
+                    borderColor: COLORS.tertiary,
+                    backgroundColor: COLORS.white,
+                    color: COLORS.primary
+                  }}
                 >
-                  {months.map((month) => (
-                    <button
-                      key={month.value}
-                      onClick={() => {
-                        setSelectedMonth(month.label);
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:opacity-80 transition-colors ${
-                        selectedMonth === month.label ? "font-medium" : ""
-                      }`}
-                      style={{
-                        backgroundColor:
-                          selectedMonth === month.label
-                            ? COLORS.tertiary
-                            : "transparent",
-                        color:
-                          selectedMonth === month.label
-                            ? COLORS.primary
-                            : "#666",
-                      }}
-                    >
-                      {month.label}
-                    </button>
+                  <option value="1">Enero</option>
+                  <option value="2">Febrero</option>
+                  <option value="3">Marzo</option>
+                  <option value="4">Abril</option>
+                  <option value="5">Mayo</option>
+                  <option value="6">Junio</option>
+                  <option value="7">Julio</option>
+                  <option value="8">Agosto</option>
+                  <option value="9">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+              </div>
+
+              {/* Year Selector - Solo años con datos */}
+              <div className="flex flex-col">
+                <label className="text-xs mb-1" style={{ color: COLORS.primary }}>
+                  Año
+                </label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  className="px-3 py-2 border rounded-lg text-sm"
+                  style={{
+                    borderColor: COLORS.tertiary,
+                    backgroundColor: COLORS.white,
+                    color: COLORS.primary
+                  }}
+                >
+                  {availableYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
                   ))}
+                </select>
+              </div>
+
+              {/* Current Selection Display */}
+              <div className="flex flex-col justify-end">
+                <div
+                  className="px-4 py-2 rounded-lg text-sm font-medium"
+                  style={{
+                    backgroundColor: COLORS.secondary,
+                    color: COLORS.white
+                  }}
+                >
+                  {getMonthName(selectedMonth)} {selectedYear}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.tertiary,
-            }}
-          >
-            <CardHeader className="pb-3">
-              <CardDescription style={{ color: COLORS.secondary }}>
-                Ingresos Totales
-              </CardDescription>
-              <CardTitle
-                className="flex items-center gap-2 text-2xl"
-                style={{ color: COLORS.primary }}
-              >
-                <TrendingUp className="w-5 h-5" />$
-                {totalIncome.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.tertiary,
-            }}
-          >
-            <CardHeader className="pb-3">
-              <CardDescription style={{ color: COLORS.secondary }}>
-                Gastos Totales
-              </CardDescription>
-              <CardTitle
-                className="flex items-center gap-2 text-2xl"
-                style={{ color: COLORS.secondary }}
-              >
-                <TrendingDown className="w-5 h-5" />$
-                {totalExpenses.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.tertiary,
-            }}
-          >
-            <CardHeader className="pb-3">
-              <CardDescription style={{ color: COLORS.secondary }}>
-                Balance Neto
-              </CardDescription>
-              <CardTitle
-                className="flex items-center gap-2 text-2xl"
-                style={{
-                  color: netBalance >= 0 ? COLORS.primary : COLORS.secondary,
-                }}
-              >
-                {netBalance >= 0 ? (
-                  <TrendingUp className="w-5 h-5" />
-                ) : (
-                  <TrendingDown className="w-5 h-5" />
-                )}
-                ${netBalance.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Income Chart */}
-          <Card
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.tertiary,
-            }}
-          >
-            <CardHeader>
-              <CardTitle style={{ color: COLORS.primary }}>
-                Ingresos por Categoría
-              </CardTitle>
-              <CardDescription style={{ color: COLORS.secondary }}>
-                Desglose de fuentes de ingresos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={incomeData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={COLORS.tertiary}
-                  />
-                  <XAxis type="number" />
-                  <YAxis dataKey="category" type="category" width={100} />
-                  <Tooltip
-                    formatter={(value: number) => `$${value.toLocaleString()}`}
-                    contentStyle={{
-                      borderRadius: "8px",
-                      backgroundColor: COLORS.quaternary,
-                      borderColor: COLORS.tertiary,
-                      color: COLORS.primary,
-                    }}
-                  />
-                  <Bar
-                    dataKey="monto"
-                    fill={COLORS.primary}
-                    radius={[0, 8, 8, 0]}
-                  >
-                    {incomeData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          index % 2 === 0 ? COLORS.primary : COLORS.secondary
-                        }
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Expenses Chart */}
-          <Card
-            style={{
-              backgroundColor: COLORS.white,
-              borderColor: COLORS.tertiary,
-            }}
-          >
-            <CardHeader>
-              <CardTitle style={{ color: COLORS.primary }}>
-                Gastos por Categoría
-              </CardTitle>
-              <CardDescription style={{ color: COLORS.secondary }}>
-                Desglose de gastos operativos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={expensesData}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={COLORS.tertiary}
-                  />
-                  <XAxis type="number" />
-                  <YAxis dataKey="category" type="category" width={100} />
-                  <Tooltip
-                    formatter={(value: number) => `$${value.toLocaleString()}`}
-                    contentStyle={{
-                      borderRadius: "8px",
-                      backgroundColor: COLORS.quaternary,
-                      borderColor: COLORS.tertiary,
-                      color: COLORS.primary,
-                    }}
-                  />
-                  <Bar
-                    dataKey="monto"
-                    fill={COLORS.primary}
-                    radius={[0, 8, 8, 0]}
-                  >
-                    {expensesData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          index % 2 === 0 ? COLORS.primary : COLORS.secondary
-                        }
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Summary and Warnings Section */}
-        <Card
-          style={{
-            backgroundColor: COLORS.white,
-            borderColor: COLORS.tertiary,
-          }}
-        >
-          <CardHeader>
-            <CardTitle
-              className="flex items-center gap-2"
-              style={{ color: COLORS.primary }}
-            >
-              <AlertTriangle className="w-5 h-5" />
-              Resumen y Advertencias
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert
-              style={{
-                backgroundColor: COLORS.primary,
-                border: "none",
-              }}
-            >
-              <AlertTitle style={{ color: COLORS.white }}>
-                Resumen del Período
-              </AlertTitle>
-              <AlertDescription style={{ color: COLORS.white }}>
-                Durante este período, se han registrado ingresos totales de{" "}
-                <strong>${totalIncome.toLocaleString()}</strong> con gastos de{" "}
-                <strong>${totalExpenses.toLocaleString()}</strong>, resultando
-                en un balance neto
-                {netBalance >= 0 ? " positivo " : " negativo "}
-                de <strong>${Math.abs(netBalance).toLocaleString()}</strong>. El
-                margen de beneficio es del <strong>{profitMargin}%</strong>.
-              </AlertDescription>
-            </Alert>
-
-            {netBalance < 0 && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Advertencia: Balance Negativo</AlertTitle>
-                <AlertDescription>
-                  Los gastos superan a los ingresos. Se requiere acción
-                  inmediata para reducir costos o aumentar ingresos.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {expensesData[0].monto > totalIncome * 0.3 && (
-              <Alert
-                style={{
-                  backgroundColor: COLORS.primary,
-                  border: "none",
-                }}
-              >
-                <AlertTriangle
-                  className="h-4 w-4"
-                  style={{ color: COLORS.white }}
-                />
-                <AlertTitle style={{ color: COLORS.white }}>
-                  Atención: Nómina Elevada
-                </AlertTitle>
-                <AlertDescription style={{ color: COLORS.white }}>
-                  El gasto en nómina representa más del 30% de los ingresos
-                  totales. Considere revisar la eficiencia operativa.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <Alert
-              style={{
-                backgroundColor: COLORS.secondary,
-                border: "none",
-              }}
-            >
-              <AlertTitle style={{ color: COLORS.white }}>
-                Análisis de Categorías
-              </AlertTitle>
-              <AlertDescription style={{ color: COLORS.white }}>
-                La principal fuente de ingresos es{" "}
-                <strong>{incomeData[0].category}</strong> ($
-                {incomeData[0].monto.toLocaleString()}). El mayor gasto es{" "}
-                <strong>{expensesData[0].category}</strong> ($
-                {expensesData[0].monto.toLocaleString()}).
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-
-        {/* Recommendations Section */}
-        <Card
-          style={{
-            backgroundColor: COLORS.white,
-            borderColor: COLORS.tertiary,
-          }}
-        >
-          <CardHeader>
-            <CardTitle
-              className="flex items-center gap-2"
-              style={{ color: COLORS.primary }}
-            >
-              <Lightbulb className="w-5 h-5" />
-              Recomendaciones
-            </CardTitle>
-            <CardDescription style={{ color: COLORS.secondary }}>
-              Acciones sugeridas para mejorar el rendimiento financiero
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div
-                className="flex gap-3 p-4 rounded-lg"
-                style={{
-                  backgroundColor: COLORS.primary,
-                }}
-              >
-                <div
-                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
-                >
-                  1
-                </div>
-                <div>
-                  <h3
-                    className="font-semibold mb-1"
-                    style={{ color: COLORS.white }}
-                  >
-                    Diversificar Fuentes de Ingresos
-                  </h3>
-                  <p className="text-sm" style={{ color: COLORS.white }}>
-                    Aunque las ventas son la principal fuente de ingresos,
-                    considere aumentar los ingresos de servicios y consultoría
-                    para reducir la dependencia de una sola fuente.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="flex gap-3 p-4 rounded-lg"
-                style={{
-                  backgroundColor: COLORS.secondary,
-                }}
-              >
-                <div
-                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold"
-                  style={{
-                    backgroundColor: COLORS.primary,
-                    color: COLORS.white,
-                  }}
-                >
-                  2
-                </div>
-                <div>
-                  <h3
-                    className="font-semibold mb-1"
-                    style={{ color: COLORS.white }}
-                  >
-                    Optimizar Gastos de Marketing
-                  </h3>
-                  <p className="text-sm" style={{ color: COLORS.white }}>
-                    Los gastos de marketing ($18,000) son significativos.
-                    Analice el ROI de cada canal y reasigne el presupuesto hacia
-                    las estrategias más efectivas.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="flex gap-3 p-4 rounded-lg"
-                style={{
-                  backgroundColor: COLORS.primary,
-                }}
-              >
-                <div
-                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
-                >
-                  3
-                </div>
-                <div>
-                  <h3
-                    className="font-semibold mb-1"
-                    style={{ color: COLORS.white }}
-                  >
-                    Revisar Contratos de Servicios
-                  </h3>
-                  <p className="text-sm" style={{ color: COLORS.white }}>
-                    Evalúe los contratos de servicios y suministros para
-                    identificar oportunidades de negociación o cambio a
-                    proveedores más económicos.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className="flex gap-3 p-4 rounded-lg"
-                style={{
-                  backgroundColor: COLORS.primary,
-                }}
-              >
-                <div
-                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold"
-                  style={{
-                    backgroundColor: COLORS.white,
-                    color: COLORS.primary,
-                  }}
-                >
-                  4
-                </div>
-                <div>
-                  <h3
-                    className="font-semibold mb-1"
-                    style={{ color: COLORS.white }}
-                  >
-                    Establecer Metas de Crecimiento
-                  </h3>
-                  <p className="text-sm" style={{ color: COLORS.white }}>
-                    Con un margen de beneficio del {profitMargin}%, establezca
-                    objetivos para alcanzar un margen del 40-50% mediante el
-                    aumento de ingresos y la optimización de costos.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <SummaryCards data={dashboardData} colors={COLORS} />
+        <ChartsSection data={dashboardData} colors={COLORS} />
+        <RecommendationsSection data={dashboardData} colors={COLORS} />
       </div>
     </div>
   );
+}
+
+// Helper function to get month name
+function getMonthName(monthNumber: string) {
+  const months = [
+    '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  return months[parseInt(monthNumber)];
 }
