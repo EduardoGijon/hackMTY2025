@@ -90,28 +90,6 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({ data }) => {
           />
         </LineChart>
       </ResponsiveContainer>
-      
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <div className="bg-green-50 p-4 rounded-lg">
-          <div className="text-sm text-green-600 font-medium">Ingresos Promedio</div>
-          <div className="text-2xl font-bold text-green-700">
-            ${Math.round(data.reduce((sum, d) => sum + d.income, 0) / data.length).toLocaleString()}
-          </div>
-        </div>
-        <div className="bg-red-50 p-4 rounded-lg">
-          <div className="text-sm text-red-600 font-medium">Gastos Promedio</div>
-          <div className="text-2xl font-bold text-red-700">
-            ${Math.round(data.reduce((sum, d) => sum + d.expenses, 0) / data.length).toLocaleString()}
-          </div>
-        </div>
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <div className="text-sm text-blue-600 font-medium">Balance Promedio</div>
-          <div className="text-2xl font-bold text-blue-700">
-            ${Math.round(data.reduce((sum, d) => sum + d.balance, 0) / data.length).toLocaleString()}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -41,11 +41,23 @@ export interface MonthlyData {
   balance: number;
 }
 
+// export interface PredictionData {
+//   cashFlowRisk: 'low' | 'medium' | 'high';
+//   recommendedActions: string[];
+//   predictedBalance30Days: number;
+//   alerts: Alert[];
+// }
 export interface PredictionData {
+  predictedBalance30Days: number;
+  predictedBalance60Days: number;    // ← Agregar esta línea
+  predictedBalance90Days: number;    // ← Agregar esta línea
   cashFlowRisk: 'low' | 'medium' | 'high';
   recommendedActions: string[];
-  predictedBalance30Days: number;
-  alerts: Alert[];
+  alerts: {
+    type: 'info' | 'warning' | 'danger';
+    message: string;
+    action: string;
+  }[];
 }
 
 export interface Alert {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 interface Prediction {
   cashFlowRisk: 'low' | 'medium' | 'high';
@@ -88,7 +88,7 @@ const PredictionsPanel: React.FC<PredictionsPanelProps> = ({ predictions }) => {
       </div>
 
       {/* Alerts */}
-      {predictions.alerts.length > 0 && (
+      {predictions.alerts && predictions.alerts.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas Inteligentes</h3>
           <div className="space-y-3">
