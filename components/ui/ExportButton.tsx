@@ -1,16 +1,18 @@
 import React from 'react';
 import { Download, FileText, Mail } from 'lucide-react';
+import { DashboardData } from '@/types';
 
 interface ExportButtonProps {
-  dashboardData: any;
-  selectedMonth: string;
+    data: DashboardData;
+    dashboardData: any;
+    selectedMonth: string;
 }
 
 const ExportButton: React.FC<ExportButtonProps> = ({ dashboardData, selectedMonth }) => {
-  const generateReport = () => {
-    if (!dashboardData) return;
+    const generateReport = () => {
+        if (!dashboardData) return;
 
-    const reportText = `
+        const reportText = `
 REPORTE FINANCIERO - ${selectedMonth}
 =====================================
 
@@ -32,27 +34,27 @@ ${dashboardData.predictions?.recommendedActions?.map((action: string, i: number)
 Generado con Pulso Analytics
     `;
 
-    const blob = new Blob([reportText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reporte-financiero-${selectedMonth}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+        const blob = new Blob([reportText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte-financiero-${selectedMonth}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
-  return (
-    <button
-      onClick={generateReport}
-      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-      disabled={!dashboardData}
-    >
-      <Download className="w-4 h-4" />
-      Export
-    </button>
-  );
+    return (
+        <button
+            onClick={generateReport}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={!dashboardData}
+        >
+            <Download className="w-4 h-4" />
+            Export
+        </button>
+    );
 };
 
 export default ExportButton;
