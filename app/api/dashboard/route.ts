@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { DashboardData } from '@/types'; 
 
 const prisma = new PrismaClient();
 
@@ -29,8 +28,8 @@ export async function GET(request: NextRequest) {
     const incomeTransactions = transactions.filter(t => t.type === 'income');
     const expenseTransactions = transactions.filter(t => t.type === 'expense');
 
-    const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
-    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = incomeTransactions.reduce((sum: number, t: any) => sum + Number(t.amount), 0);
+    const totalExpenses = expenseTransactions.reduce((sum: number, t: any) => sum + Number(t.amount), 0);
     const netBalance = totalIncome - totalExpenses;
     const profitMargin = totalIncome > 0 ? ((netBalance / totalIncome) * 100) : 0;
 
@@ -41,14 +40,13 @@ export async function GET(request: NextRequest) {
     // Generate predictions and alerts
     const predictions = generatePredictions(transactions, netBalance, totalIncome, totalExpenses);
 
-    const dashboardData: DashboardData = {
+    const dashboardData = {
       totalIncome,
       totalExpenses,
       netBalance,
       profitMargin,
       incomeByCategory,
       expensesByCategory,
-      monthlyTrend: [], // Implement monthly trend logic
       predictions
     };
 
@@ -60,21 +58,21 @@ export async function GET(request: NextRequest) {
 }
 
 function groupByCategory(transactions: any[]) {
-  const grouped = transactions.reduce((acc, transaction) => {
+  const grouped = transactions.reduce((acc: any, transaction: any) => {
     const category = transaction.category;
     if (!acc[category]) {
       acc[category] = 0;
     }
-    acc[category] += transaction.amount;
+    acc[category] += Number(transaction.amount);
     return acc;
   }, {});
 
-  const total = Object.values(grouped).reduce((sum: number, amount: any) => sum + amount, 0);
+  const total = Object.values(grouped).reduce((sum: number, amount: any) => sum + Number(amount), 0);
   
   return Object.entries(grouped).map(([category, amount]) => ({
     category,
-    amount: amount as number,
-    percentage: total > 0 ? ((amount as number / total) * 100) : 0
+    amount: Number(amount),
+    percentage: total as number > 0 ? ((Number(amount) / total) * 100) : 0
   }));
 }
 
@@ -115,60 +113,35 @@ function generatePredictions(transactions: any[], netBalance: number, totalIncom
   return {
     cashFlowRisk,
     recommendedActions,
-    predictedBalance30Days: netBalance * 1.1, // Simple prediction
+    predictedBalance30Days: netBalance * 1.1,
     alerts
   };
 }
 
-// ...existing code...
-
-function generateAdvancedPredictions(transactions: any[], currentBalance: number, totalIncome: number, totalExpenses: number) {
-  // 1. ANÁLISIS TEMPORAL
-  const monthlyData = getMonthlyTrends(transactions);
-  const growthRate = calculateGrowthRate(monthlyData);
-  const volatility = calculateVolatility(monthlyData);
-  
-  // 2. PREDICCIONES AVANZADAS
-  const predictions = {
-    // Predicción basada en tendencia
-    next30Days: predictWithTrend(currentBalance, growthRate),
-    next60Days: predictWithTrend(currentBalance, growthRate, 60),
-    next90Days: predictWithTrend(currentBalance, growthRate, 90),
-    
-    // Análisis de riesgo mejorado
-    cashFlowRisk: assessAdvancedRisk(currentBalance, volatility, growthRate),
-    
-    // Recomendaciones inteligentes
-    recommendations: generateSmartRecommendations(monthlyData, currentBalance, volatility),
-    
-    // Alertas predictivas
-    alerts: generatePredictiveAlerts(monthlyData, growthRate, volatility)
-  };
-
-  return predictions;
-}
-
-// FUNCIONES DE ANÁLISIS AVANZADO
+// ✅ FUNCIÓN CORREGIDA - Aquí estaba el problema del spread
 function getMonthlyTrends(transactions: any[]) {
-  const monthlyGroups = transactions.reduce((acc, transaction) => {
-    const monthKey = transaction.date.toISOString().slice(0, 7); // YYYY-MM
+  const monthlyGroups = transactions.reduce((acc: any, transaction: any) => {
+    const monthKey = transaction.date.toISOString().slice(0, 7);
     if (!acc[monthKey]) {
       acc[monthKey] = { income: 0, expenses: 0, balance: 0 };
     }
     
     if (transaction.type === 'income') {
-      acc[monthKey].income += transaction.amount;
+      acc[monthKey].income += Number(transaction.amount);
     } else {
-      acc[monthKey].expenses += transaction.amount;
+      acc[monthKey].expenses += Number(transaction.amount);
     }
     acc[monthKey].balance = acc[monthKey].income - acc[monthKey].expenses;
     
     return acc;
   }, {});
 
-  return Object.entries(monthlyGroups).map(([month, data]) => ({
-    month,
-    ...data
+  // ✅ CAMBIO: En lugar de usar spread, construir objeto explícitamente
+  return Object.entries(monthlyGroups).map(([month, data]: [string, any]) => ({
+    month: month,
+    income: data.income,
+    expenses: data.expenses,
+    balance: data.balance
   })).sort((a, b) => a.month.localeCompare(b.month));
 }
 
@@ -202,28 +175,20 @@ function predictWithTrend(currentBalance: number, growthRate: number, days: numb
 }
 
 function assessAdvancedRisk(balance: number, volatility: number, growthRate: number): 'low' | 'medium' | 'high' {
-  // Balance negativo = alto riesgo
   if (balance < 0) return 'high';
-  
-  // Alta volatilidad + crecimiento negativo = alto riesgo
   if (volatility > balance * 0.3 && growthRate < -10) return 'high';
-  
-  // Volatilidad media o crecimiento bajo = riesgo medio
   if (volatility > balance * 0.2 || growthRate < 0) return 'medium';
-  
   return 'low';
 }
 
 function generateSmartRecommendations(monthlyData: any[], currentBalance: number, volatility: number) {
   const recommendations = [];
   
-  // Recomendaciones basadas en volatilidad
   if (volatility > currentBalance * 0.25) {
     recommendations.push('Crear un fondo de emergencia del 20% de ingresos mensuales');
     recommendations.push('Diversificar fuentes de ingresos para reducir volatilidad');
   }
   
-  // Recomendaciones basadas en tendencias
   const lastMonthBalance = monthlyData[monthlyData.length - 1]?.balance || 0;
   const previousMonthBalance = monthlyData[monthlyData.length - 2]?.balance || 0;
   
@@ -232,7 +197,6 @@ function generateSmartRecommendations(monthlyData: any[], currentBalance: number
     recommendations.push('Implementar estrategias para incrementar ingresos');
   }
   
-  // Análisis de categorías con mayor crecimiento
   const expenseCategories = analyzeExpenseGrowth(monthlyData);
   if (expenseCategories.length > 0) {
     recommendations.push(`Revisar gastos en: ${expenseCategories.join(', ')}`);
@@ -244,7 +208,6 @@ function generateSmartRecommendations(monthlyData: any[], currentBalance: number
 function generatePredictiveAlerts(monthlyData: any[], growthRate: number, volatility: number) {
   const alerts = [];
   
-  // Alert por tendencia negativa
   if (growthRate < -15) {
     alerts.push({
       type: 'danger' as const,
@@ -253,7 +216,6 @@ function generatePredictiveAlerts(monthlyData: any[], growthRate: number, volati
     });
   }
   
-  // Alert por alta volatilidad
   if (volatility > 20000) {
     alerts.push({
       type: 'warning' as const,
@@ -262,7 +224,6 @@ function generatePredictiveAlerts(monthlyData: any[], growthRate: number, volati
     });
   }
   
-  // Alert por crecimiento positivo
   if (growthRate > 20) {
     alerts.push({
       type: 'info' as const,
@@ -275,7 +236,5 @@ function generatePredictiveAlerts(monthlyData: any[], growthRate: number, volati
 }
 
 function analyzeExpenseGrowth(monthlyData: any[]) {
-  // Esta función podría analizar qué categorías de gastos están creciendo más
-  // Por simplicidad, retornamos categorías comunes que suelen ser problemáticas
   return ['Marketing', 'Suministros'];
 }
