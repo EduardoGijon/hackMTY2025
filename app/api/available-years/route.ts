@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ years });
   } catch (error) {
     console.error('Available years API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return empty array instead of error to prevent UI crashes
+    return NextResponse.json({ years: [] });
   }
 }

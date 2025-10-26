@@ -53,7 +53,25 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(dashboardData);
     } catch (error) {
         console.error('Dashboard API error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        // Return empty data structure instead of error to prevent UI crashes
+        return NextResponse.json({
+            totalIncome: 0,
+            totalExpenses: 0,
+            netBalance: 0,
+            profitMargin: 0,
+            incomeByCategory: [],
+            expensesByCategory: [],
+            predictions: {
+                alerts: [{
+                    type: 'warning',
+                    message: 'No se pudo conectar a la base de datos',
+                    action: 'Verifica la configuración de Vercel'
+                }],
+                cashFlowRisk: 'medium',
+                recommendedActions: ['Configura las variables de entorno en Vercel'],
+                predictedBalance30Days: 0
+            }
+        });
     }
 }
 
