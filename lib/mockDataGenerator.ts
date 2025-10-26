@@ -354,3 +354,38 @@ export function generateAvailableYears(): string[] {
     (currentYear - 2).toString()
   ];
 }
+
+export function generateMockTransactionsMultiMonth(
+  userId: string,
+  year: number,
+  month: number,
+  historyMonths: number = 12
+): MockTransaction[] {
+  const allTransactions: MockTransaction[] = [];
+
+  // Generar transacciones para cada mes histórico
+  for (let i = historyMonths - 1; i >= 0; i--) {
+    const targetDate = new Date(year, month - 1 - i, 1);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+
+    // Generar transacciones para este mes específico
+    const monthTransactions = generateMockTransactions(
+      userId, 
+      targetYear, 
+      targetMonth, 
+      'medium'
+    );
+
+    // Convertir Date a string para compatibilidad con el modelo predictivo
+    const convertedTransactions = monthTransactions.map(t => ({
+      ...t,
+      date: t.date.toISOString(), // Convertir Date a string
+      createdAt: t.createdAt.toISOString() // Convertir Date a string
+    }));
+
+    allTransactions.push(...convertedTransactions);
+  }
+
+  return allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+}

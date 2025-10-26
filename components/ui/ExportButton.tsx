@@ -50,7 +50,7 @@ Generado con Pulso Analytics
       disabled={!dashboardData}
     >
       <Download className="w-4 h-4" />
-      Exportar
+      Export
     </button>
   );
 };
