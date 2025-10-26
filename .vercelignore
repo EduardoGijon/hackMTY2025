@@ -1,0 +1,2 @@
+# No ignorar node_modules/.prisma para que se incluya en el deployment
+!node_modules/.prisma
