@@ -168,13 +168,17 @@ export default function Dashboard() {
   // Función auxiliar para agrupar transacciones por categoría
   const groupByCategory = (transactions: any[]) => {
     const grouped = transactions.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      const category = String(t.category || 'Uncategorized');
+      const amount = Number(t.amount) || 0;
+
+      acc[category] = (acc[category] || 0) + amount;
       return acc;
     }, {} as Record<string, number>);
 
-    const total = Object.values(grouped).reduce((sum, amount) => sum + amount, 0);
+    // 👇 Convertimos los valores a number explícitamente
+    const total = (Object.values(grouped) as number[]).reduce((sum, amount) => sum + amount, 0);
 
-    return Object.entries(grouped)
+    return (Object.entries(grouped) as [string, number][])
       .map(([category, amount]) => ({
         category,
         amount,
