@@ -585,7 +585,11 @@ export default function Dashboard() {
                 ))}
               </select>
 
-              <ExportButton data={dashboardData} />
+              <ExportButton
+                data={dashboardData}
+                dashboardData={dashboardData}
+                selectedMonth={selectedMonth}
+              />
             </div>
           </div>
 

@@ -34,7 +34,7 @@ export interface MockDashboardData {
 
 const INCOME_CATEGORIES = [
   'Ventas',
-  'Servicios', 
+  'Servicios',
   'Consultoría',
   'Comisiones',
   'Productos Digitales',
@@ -95,21 +95,21 @@ function generateTransactionId(): string {
 }
 
 export function generateMockTransactions(
-  userId: string, 
-  year: number, 
-  month: number, 
+  userId: string,
+  year: number,
+  month: number,
   baseIncomeLevel: 'low' | 'medium' | 'high' = 'medium'
 ): MockTransaction[] {
   const transactions: MockTransaction[] = [];
   const daysInMonth = new Date(year, month, 0).getDate();
-  
+
   // Configurar niveles base según el tipo de negocio
   const incomeLevels = {
     low: { min: 5000, max: 15000, frequency: 8 },
     medium: { min: 15000, max: 40000, frequency: 12 },
     high: { min: 40000, max: 80000, frequency: 18 }
   };
-  
+
   const expenseLevels = {
     low: { min: 3000, max: 10000, frequency: 6 },
     medium: { min: 8000, max: 25000, frequency: 10 },
@@ -121,23 +121,23 @@ export function generateMockTransactions(
 
   // Generar ingresos
   const numIncomeTransactions = randomBetween(
-    Math.max(1, incomeConfig.frequency - 3), 
+    Math.max(1, incomeConfig.frequency - 3),
     incomeConfig.frequency + 3
   );
-  
+
   for (let i = 0; i < numIncomeTransactions; i++) {
     const category = randomChoice(INCOME_CATEGORIES);
     const description = randomChoice(INCOME_DESCRIPTIONS[category as keyof typeof INCOME_DESCRIPTIONS]);
     const day = randomBetween(1, daysInMonth);
-    
+
     // Variación estacional (más ventas en ciertos meses)
     let seasonalMultiplier = 1;
     if ([11, 12].includes(month)) seasonalMultiplier = 1.3; // Nov-Dic
     if ([6, 7, 8].includes(month)) seasonalMultiplier = 0.8; // Jun-Ago
-    
+
     const baseAmount = randomFloat(incomeConfig.min, incomeConfig.max);
     const amount = Math.round(baseAmount * seasonalMultiplier);
-    
+
     transactions.push({
       id: generateTransactionId(),
       userId,
@@ -152,15 +152,15 @@ export function generateMockTransactions(
 
   // Generar gastos
   const numExpenseTransactions = randomBetween(
-    Math.max(1, expenseConfig.frequency - 2), 
+    Math.max(1, expenseConfig.frequency - 2),
     expenseConfig.frequency + 2
   );
-  
+
   for (let i = 0; i < numExpenseTransactions; i++) {
     const category = randomChoice(EXPENSE_CATEGORIES);
     const description = randomChoice(EXPENSE_DESCRIPTIONS[category as keyof typeof EXPENSE_DESCRIPTIONS]);
     const day = randomBetween(1, daysInMonth);
-    
+
     // Gastos fijos vs variables
     let amount: number;
     if (['Nómina', 'Alquiler', 'Seguros'].includes(category)) {
@@ -170,7 +170,7 @@ export function generateMockTransactions(
       // Gastos variables
       amount = Math.round(randomFloat(expenseConfig.min * 0.3, expenseConfig.max * 0.8));
     }
-    
+
     transactions.push({
       id: generateTransactionId(),
       userId,
@@ -187,23 +187,23 @@ export function generateMockTransactions(
 }
 
 export function generateMockDashboardData(
-  userId: string, 
-  year: number, 
+  userId: string,
+  year: number,
   month: number,
   includeHistorical: boolean = true
 ): MockDashboardData {
   // Generar datos del mes actual
   const currentTransactions = generateMockTransactions(userId, year, month, 'medium');
-  
+
   // Generar datos históricos (últimos 6 meses)
   const historicalData: Array<{ month: string; income: number; expenses: number; balance: number }> = [];
-  
+
   if (includeHistorical) {
     for (let i = 5; i >= 0; i--) {
       const targetDate = new Date(year, month - 1 - i, 1);
       const targetYear = targetDate.getFullYear();
       const targetMonth = targetDate.getMonth() + 1;
-      
+
       const monthTransactions = generateMockTransactions(userId, targetYear, targetMonth, 'medium');
       const monthIncome = monthTransactions
         .filter(t => t.type === 'income')
@@ -211,7 +211,7 @@ export function generateMockDashboardData(
       const monthExpenses = monthTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
-      
+
       historicalData.push({
         month: `${targetYear}-${targetMonth.toString().padStart(2, '0')}`,
         income: monthIncome,
@@ -224,7 +224,7 @@ export function generateMockDashboardData(
   // Calcular métricas del mes actual
   const incomeTransactions = currentTransactions.filter(t => t.type === 'income');
   const expenseTransactions = currentTransactions.filter(t => t.type === 'expense');
-  
+
   const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
   const netBalance = totalIncome - totalExpenses;
@@ -256,7 +256,7 @@ function groupTransactionsByCategory(transactions: MockTransaction[]) {
   }, {} as Record<string, number>);
 
   const total = Object.values(grouped).reduce((sum, amount) => sum + amount, 0);
-  
+
   return Object.entries(grouped)
     .map(([category, amount]) => ({
       category,
@@ -277,12 +277,12 @@ function generateSmartPredictions(
   const recommendedActions = [];
 
   // Análisis de tendencia
-  const avgBalance = historicalData.length > 0 
-    ? historicalData.reduce((sum, d) => sum + d.balance, 0) / historicalData.length 
+  const avgBalance = historicalData.length > 0
+    ? historicalData.reduce((sum, d) => sum + d.balance, 0) / historicalData.length
     : currentBalance;
-  
-  const trend = historicalData.length > 1 
-    ? ((currentBalance - historicalData[0].balance) / historicalData[0].balance) * 100 
+
+  const trend = historicalData.length > 1
+    ? ((currentBalance - historicalData[0].balance) / historicalData[0].balance) * 100
     : 0;
 
   // Determinar riesgo
@@ -306,7 +306,7 @@ function generateSmartPredictions(
   } else {
     alerts.push({
       type: 'info' as const,
-      message: `Excelente margen de ganancia: ${((currentBalance/currentIncome)*100).toFixed(1)}%`,
+      message: `Excelente margen de ganancia: ${((currentBalance / currentIncome) * 100).toFixed(1)}%`,
       action: 'Mantener las buenas prácticas financieras'
     });
     recommendedActions.push('Considerar inversión en crecimiento del negocio');
@@ -371,17 +371,17 @@ export function generateMockTransactionsMultiMonth(
 
     // Generar transacciones para este mes específico
     const monthTransactions = generateMockTransactions(
-      userId, 
-      targetYear, 
-      targetMonth, 
+      userId,
+      targetYear,
+      targetMonth,
       'medium'
     );
 
-    // Convertir Date a string para compatibilidad con el modelo predictivo
+    // ✅ Después (solución):
     const convertedTransactions = monthTransactions.map(t => ({
       ...t,
-      date: t.date.toISOString(), // Convertir Date a string
-      createdAt: t.createdAt.toISOString() // Convertir Date a string
+      date: new Date(t.date),           // Convertir string a Date
+      createdAt: new Date(t.createdAt)  // Convertir string a Date
     }));
 
     allTransactions.push(...convertedTransactions);
