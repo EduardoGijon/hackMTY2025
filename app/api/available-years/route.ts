@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       transactions.map( (transaction: any) => 
         transaction.date.getFullYear().toString()
       )
-    )].sort((a, b) => parseInt(b) - parseInt(a)); // Más reciente primero
+    )].sort((a, b) => parseInt(b as unknown as string) - parseInt(a as unknown as string)); // Más reciente primero
 
     return NextResponse.json({ years });
   } catch (error) {
